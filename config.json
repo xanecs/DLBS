@@ -1,5 +1,11 @@
 {
 	"compilepath": "/tmp/dlbs-compile",
 	"outputpath": "/tmp/dlbs-output",
-	"port": "9001"
+	"webroot": "http://localhost:8000",
+	"port": "8000",
+	
+	"enable_filetimeout": true,
+	"filetimeout": 600000, 
+	
+	"whitelist": true
 }
