@@ -1,1 +1,42 @@
+#
+# All listed files won't be comitted or pushed into the 
+# repository. Exclude all binarys and temporary files to
+# keep the repository clean!
+#
+# Source for .gitignore-files: 
+# https://github.com/github/gitignore
+#
+
+#------------  Linux  ------------#
+.*
+!.gitignore
+*~
+
+#------------ Windows ------------#
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+#------------ Eclipse ------------#
+*.pydevproject
+.project
+.metadata
+bin/**
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath
+.externalToolBuilders/
+*.launch
+.cproject
+.buildpath
+
+#------------ GitEye ------------#
 /.project
