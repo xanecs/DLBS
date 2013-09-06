@@ -1,0 +1,5 @@
+{
+	"compilepath": "/tmp/dlbs-compile",
+	"outputpath": "/tmp/dlbs-output",
+	"port": "9001"
+}
