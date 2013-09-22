@@ -7,5 +7,6 @@
 	"enable_filetimeout": true,
 	"filetimeout": 600000, 
 	
+	"pdflatex": "/usr/bin/pdflatex",
 	"whitelist": true
 }
