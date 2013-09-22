@@ -9,7 +9,7 @@ var manage = require('./manage.js');
 var fs = require('fs');
 var url = require('url');
 var config = require('./../config.json');
-var child_process = require('child_process');
+var exec = require('child_process').exec;
 
 queue = [];
 isCompiling = false;
@@ -119,12 +119,8 @@ var download_file_httpget = function(file_url, file_name, subdir) {
 };
 
 var compile = function(){
-	var pdflatex = "cd " + config.compilepath +"; " + config.pdflatex + " --interaction=nonstopmode --output-format='" + queue[0].format + "' " + queue[0].mainfile + ";";
-	console.log(pdflatex);
-	child_process.exec(pdflatex, {cwd: config.compilepath}, function(err, stdout, stderr){
-		console.log(err);
-		console.log(stdout);
-		console.log(stderr);
+	var pdflatex = "cd " + config.compilepath +"; pdflatex -interaction=nonstopmode --output-format='" + queue[0].format + "' " + queue[0].mainfile + ";";
+	exec(pdflatex, function(err, stdout, stderr){
 		provide();
 	});
 };
