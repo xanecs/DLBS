@@ -120,28 +120,33 @@ var download_file_httpget = function(file_url, file_name, subdir) {
 
 var compile = function(){
 	var pdflatex = "cd " + config.compilepath +"; " + config.pdflatex + " --interaction=nonstopmode --output-format='" + queue[0].format + "' " + queue[0].mainfile + ";";
-	console.log(pdflatex);
-	child_process.exec(pdflatex, {cwd: config.compilepath}, function(err, stdout, stderr){
-		console.log(err);
-		console.log(stdout);
-		console.log(stderr);
-		provide();
-	});
+	try{
+	    child_process.exec(pdflatex, {cwd: config.compilepath}, function(err, stdout, stderr){
+		    provide();
+	    });
+	} catch(e) {
+	    queue[0].state = "error";
+		queue[0].message = e;
+		queue[0].finished = Date.now();
+		nextQueue();
+	}
 };
 
 var provide = function(){
 	try{
-	var pos = queue[0].mainfile.lastIndexOf(".");
+	    var pos = queue[0].mainfile.lastIndexOf(".");
 	
 		var oldpdfpath = config.compilepath + "/" + queue[0].mainfile.substr(0, pos) + ".";
 		var newpdfpath = config.outputpath + "/" + queue[0].jobid + ".";
-	
-		fs.createReadStream(oldpdfpath + queue[0].format).pipe(fs.createWriteStream(newpdfpath + queue[0].format));
-		fs.createReadStream(oldpdfpath + "log").pipe(fs.createWriteStream(newpdfpath + "log"));
-		
-		queue[0].state = "done";
-		queue[0].lastchange = Date.now();
-		console.log("Job " + queue[0].jobid + " | Finished compiling (Output: "+ queue[0].format + ", Files: " + queue[0].files.length + ", Folders: " + queue[0].folders.length + ")");
+	    
+	    if (fs.existsSync(oldpdfpath + queue[0].format)) 
+		    fs.createReadStream(oldpdfpath + queue[0].format).pipe(fs.createWriteStream(newpdfpath + queue[0].format));
+	    if (fs.existsSync(oldpdfpath + "log")) 
+		    fs.createReadStream(oldpdfpath + "log").pipe(fs.createWriteStream(newpdfpath + "log"));
+		    
+	    queue[0].state = "done";
+	    queue[0].lastchange = Date.now();
+	    console.log("Job " + queue[0].jobid + " | Finished compiling (Output: "+ queue[0].format + ", Files: " + queue[0].files.length + ", Folders: " + queue[0].folders.length + ")");
 	}
 	catch(e){
 		queue[0].state = "error";
