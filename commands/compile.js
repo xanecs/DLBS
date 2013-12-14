@@ -7,12 +7,13 @@ var http = require('http');
 var path = require('path');
 var manage = require('./manage.js');
 var fs = require('fs');
+var node_fs = require('node-fs');
 var url = require('url');
 var config = require('./../config.json');
 var child_process = require('child_process');
 
-queue = [];
-isCompiling = false;
+var job;
+var isCompiling = false;
 
 exports.compile = function(){
 	if (!isCompiling)
@@ -24,9 +25,9 @@ compilequeue = function(){
 	if ( pending !== null){
 		isCompiling = true;
 		
-		queue[0] = pending;
-		console.log("Job " + queue[0].jobid + " | Start compiling");
-		prepareDirectories(queue[0]);
+		job = pending;
+		console.log("Job " + job.jobid + " | Start compiling");
+		downloadFiles();
 	}
 	else {
 		isCompiling = false;
@@ -34,132 +35,105 @@ compilequeue = function(){
 	}
 };
 
-var prepareDirectories = function(object){
-	
-	try{
-		//Delete directory
-		if(fs.existsSync(config.compilepath)) {
-			rmDir(config.compilepath);
-		}
-		
-		//Create directory
-		fs.mkdirSync(config.compilepath);
-		
-		//Create requested directory
-		var highestlevel = 0;
-		for (var i = 0; i < queue[0].folders.length; i++){
-			var level = path.join(queue[0].folders[i].path, queue[0].folders[i].name).split("/").length - 1;
-			queue[0].folders[i].level = level;
-			if (level > highestlevel){
-				highestlevel = level;
-			}
-		}
-		for (var x = 0; x <= highestlevel; x++)
-			for (i = 0; i < queue[0].folders.length; i++){
-				if (queue[0].folders[i].level == x)
-					fs.mkdirSync(config.compilepath + path.join(queue[0].folders[i].path , queue[0].folders[i].name));
-			}
-		
-		//Download files
-		downloadFiles(queue[0]);
-	}
-	catch(e){
-		queue[0].state = "error";
-		queue[0].message = e;
-		queue[0].finished = Date.now();
-		console.log(e);
-		nextQueue();
-	}
-};
+
 
 var downloadFiles = function(){
-	if (queue[0].files.length > 0){
-		for (var i = 0; i < queue[0].files.length; i++){
-			download_file_httpget(queue[0].files[i].url, queue[0].files[i].name, queue[0].files[i].path);
+	if (job.files.length > 0){
+		for (var i = 0; i < job.files.length; i++){
+			download_file_httpget(job.files[i].url, job.files[i].path);
 		}
 	} else {
-		queue[0].state = "error";
-		queue[0].message = "Bad Input: files not reachable";
-		queue[0].finished = Date.now();
+		job.state = "error";
+		job.message = "Bad Input: files not reachable";
+		job.finished = Date.now();
 		nextQueue();
 	}
 };
 
 var sucessfullydownloaded = 0;
-var download_file_httpget = function(file_url, file_name, subdir) {
+var download_file_httpget = function(file_url, file_path) {
 	try{
-	var options = {
-		host: url.parse(file_url).host,
-		port: 80,
-		path: url.parse(file_url).pathname
-	};
-	
-	var file = fs.createWriteStream(config.compilepath + subdir + "/" + file_name);
-	
-	http.get(options, function(res) {
-		res.on('data', function(data) {
-			file.write(data);
-		}).on('end', function() {
-			file.end();
-			
-			sucessfullydownloaded++;
-			if (sucessfullydownloaded >= queue[0].files.length){
-				sucessfullydownloaded = 0;
-				compile();
-			}
+		console.log(file_url);
+		var options = {
+			host: url.parse(file_url).host,
+			port: 80,
+			path: url.parse(file_url).pathname
+		};
+		
+		node_fs.mkdirSync(path.join(config.compilepath, file_path.substr(0, file_path.lastIndexOf('/'))), 0777, true);
+
+		var file = fs.createWriteStream(path.join(config.compilepath, file_path), {mode: 0777});
+		
+		http.get(options, function(res) {
+			res.on('data', function(data) {
+				file.write(data);
+			}).on('end', function() {
+				file.end();
+				sucessfullydownloaded++;
+				if (sucessfullydownloaded >= job.files.length){
+					sucessfullydownloaded = 0;
+					compile();
+				}
+			});
 		});
-	});
 	} catch(e){
-		queue[0].state = "error";
-		queue[0].message = e;
-		queue[0].finished = Date.now();
+		job.state = "error";
+		job.message = e;
+		job.finished = Date.now();
+		console.log(e);
 		nextQueue();
 	}
 	
 };
 
 var compile = function(){
-	var pdflatex = "cd " + config.compilepath +"; " + config.pdflatex + " --interaction=nonstopmode --output-format='" + queue[0].format + "' " + queue[0].mainfile + ";";
+	var pdflatex = config.pdflatex + " --interaction=nonstopmode --output-directory=\"" + config.compilepath + "\" --output-format=" + job.format + " \"" + path.join(config.compilepath, job.mainfile) + "\"";
+	console.log(pdflatex);
 	try{
 	    child_process.exec(pdflatex, {cwd: config.compilepath}, function(err, stdout, stderr){
+		    if(stderr) {
+		    	console.log(stdout);
+		    	console.log(stderr);
+		    }
 		    provide();
 	    });
 	} catch(e) {
-	    queue[0].state = "error";
-		queue[0].message = e;
-		queue[0].finished = Date.now();
+	    job.state = "error";
+		job.message = e;
+		job.finished = Date.now();
 		nextQueue();
 	}
 };
 
 var provide = function(){
 	try{
-	    var pos = queue[0].mainfile.lastIndexOf(".");
+	    var pos = job.mainfile.lastIndexOf(".");
 	
-		var oldpdfpath = config.compilepath + "/" + queue[0].mainfile.substr(0, pos) + ".";
-		var newpdfpath = config.outputpath + "/" + queue[0].jobid + ".";
-	    
-	    if (fs.existsSync(oldpdfpath + queue[0].format)) 
-		    fs.createReadStream(oldpdfpath + queue[0].format).pipe(fs.createWriteStream(newpdfpath + queue[0].format));
+		var oldpdfpath = path.join(config.compilepath, job.mainfile.substr(0, pos).substr(job.mainfile.lastIndexOf('/'))) + ".";
+		var newpdfpath = config.outputpath + "/" + job.jobid + ".";
+	    console.log(oldpdfpath)
+
+	    if (fs.existsSync(oldpdfpath + job.format)) 
+		    fs.createReadStream(oldpdfpath + job.format).pipe(fs.createWriteStream(newpdfpath + job.format));
 	    if (fs.existsSync(oldpdfpath + "log")) 
 		    fs.createReadStream(oldpdfpath + "log").pipe(fs.createWriteStream(newpdfpath + "log"));
 		    
-	    queue[0].state = "done";
-	    queue[0].lastchange = Date.now();
-	    console.log("Job " + queue[0].jobid + " | Finished compiling (Output: "+ queue[0].format + ", Files: " + queue[0].files.length + ", Folders: " + queue[0].folders.length + ")");
+	    job.state = "done";
+	    job.lastchange = Date.now();
+	    console.log("Job " + job.jobid + " | Finished compiling (Output: "+ job.format + ", Files: " + job.files.length + ")");
 	}
 	catch(e){
-		queue[0].state = "error";
-		queue[0].message = e;
-		queue[0].lastchange = Date.now();
-		console.log("Job " + queue[0].jobid + " | " + e);
+		job.state = "error";
+		job.message = e;
+		job.lastchange = Date.now();
+		console.log("Job " + job.jobid + " | " + e);
 	}
 	
 	nextQueue();
 };
 
 var nextQueue = function(){	
-	manage.updateJob(queue[0].jobid, queue[0]);
+	manage.updateJob(job.jobid, job);
 	compilequeue();
 };
 

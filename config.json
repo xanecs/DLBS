@@ -1,12 +1,12 @@
 {
-	"compilepath": "/tmp/dlbs-compile",
-	"outputpath": "/tmp/dlbs-output",
+	"compilepath": "F:\\dlbs-compile",
+	"outputpath": "F:\\dlbs-output",
 	"webroot": "http://localhost:8000",
 	"port": "8000",
 	
 	"enable_filetimeout": true,
 	"filetimeout": 600000, 
 	
-	"pdflatex": "/usr/bin/pdflatex",
+	"pdflatex": "\"E:\\MiKTeX 2.9\\miktex\\bin\\x64\\pdflatex.exe\"",
 	"whitelist": true
 }

@@ -58,7 +58,6 @@ exports.createjob = function(json){
 			state: "pending", 
 			format: json.format, 
 			mainfile: json.mainfile, 
-			folders: json.folders,
 			files: json.files, 
 			created: Date.now()
 		};
