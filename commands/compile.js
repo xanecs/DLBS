@@ -54,17 +54,17 @@ var sucessfullydownloaded = 0;
 var download_file_httpget = function(file_url, file_path) {
 	try{
 		console.log(file_url);
-		var options = {
+		/*var options = {
 			host: url.parse(file_url).host,
-			port: 80,
+			port: url.parse(file_url).port || 80,
 			path: url.parse(file_url).pathname
-		};
+		};*/
 		
 		node_fs.mkdirSync(path.join(config.compilepath, file_path.substr(0, file_path.lastIndexOf('/'))), 0777, true);
 
 		var file = fs.createWriteStream(path.join(config.compilepath, file_path), {mode: 0777});
 		
-		http.get(options, function(res) {
+		http.get(file_url, function(res) {
 			res.on('data', function(data) {
 				file.write(data);
 			}).on('end', function() {
@@ -107,9 +107,8 @@ var compile = function(){
 
 var provide = function(){
 	try{
-	    var pos = job.mainfile.lastIndexOf(".");
-	
-		var oldpdfpath = path.join(config.compilepath, job.mainfile.substr(0, pos).substr(job.mainfile.lastIndexOf('/'))) + ".";
+		var filename = job.mainfile.split(/(\\|\/)/g).pop();
+		var oldpdfpath = path.join(config.compilepath, filename.substr(0, filename.lastIndexOf('.'))) + ".";
 		var newpdfpath = config.outputpath + "/" + job.jobid + ".";
 	    console.log(oldpdfpath)
 

@@ -1,7 +1,7 @@
 {
 	"compilepath": "F:\\dlbs-compile",
 	"outputpath": "F:\\dlbs-output",
-	"webroot": "http://localhost:8000",
+	"webroot": "http://10.0.2.2:8000",
 	"port": "8000",
 	
 	"enable_filetimeout": true,
