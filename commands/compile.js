@@ -88,7 +88,12 @@ var download_file_httpget = function(file_url, file_path) {
 };
 
 var compile = function(){
-	var pdflatex = config.pdflatex + " --interaction=nonstopmode --output-directory=\"" + config.compilepath + "\" --output-format=" + job.format + " \"" + path.join(config.compilepath, job.mainfile) + "\"";
+	if(job.format == 'dvi') {
+		flag = '';
+	} else {
+		flag = ' --' + job.format;
+	}
+	var pdflatex = config.pdflatex + flag + " \"" + path.join(config.compilepath, job.mainfile) + "\"";
 	console.log(pdflatex);
 	try{
 	    child_process.exec(pdflatex, {cwd: config.compilepath}, function(err, stdout, stderr){
