@@ -11,7 +11,7 @@ var node_fs = require('node-fs');
 var url = require('url');
 var config = require('./../config.json');
 var child_process = require('child_process');
-
+var utils = require('../utils.js');
 var job;
 var isCompiling = false;
 
@@ -27,6 +27,7 @@ compilequeue = function(){
 		
 		job = pending;
 		console.log("Job " + job.jobid + " | Start compiling");
+		utils.cleanCompile();
 		downloadFiles();
 	}
 	else {

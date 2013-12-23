@@ -26,3 +26,10 @@ exports.cleanDirectories = function(){
 	fs.mkdirSync(config.compilepath);
 	fs.mkdirSync(config.outputpath);
 };
+
+exports.cleanCompile = function() {
+	if(fs.existsSync(config.compilepath)) {
+		rmDir(config.compilepath);
+	}
+	fs.mkdirSync(config.compilepath);
+}
