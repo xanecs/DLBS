@@ -23,7 +23,7 @@ app.get('/output/*', function(req, res) {
 	if (!isKnownHost(req, res)){
 		return;
 	}
-	
+
 	var mimeTypes = {
 			"pdf": "application/pdf",
 			"dvi": "application/x-dvi",
@@ -32,7 +32,7 @@ app.get('/output/*', function(req, res) {
 	var filename = uri.substr(uri.lastIndexOf("/"));
 	var filepath = path.join(config.outputpath, filename);
 	var stats;
-	
+
 	try {
 		stats = fs.lstatSync(filepath); // throws if path doesn't exist
 	} catch (e) {
@@ -41,15 +41,15 @@ app.get('/output/*', function(req, res) {
 		res.end();
 		return;
 	}
-	
+
 	if (stats.isFile()) {
 		// path exists, is a file
 		var extention = path.extname(filename).split(".")[1];
-		switch(extention){ 
-			case "dvi": case "pdf": case "log": 
+		switch(extention){
+			case "dvi": case "pdf": case "log":
 				var mimeType = mimeTypes[extention];
 				res.writeHead(200, {'Content-Type': mimeType} );
-				
+
 				var fileStream = fs.createReadStream(filepath);
 				fileStream.pipe(res);
 				break;
@@ -57,7 +57,7 @@ app.get('/output/*', function(req, res) {
 				res.writeHead(403, {'Content-Type': 'text/plain'});
 				res.end("Only .dvi, .pdf and .log files allowed");
 		}
-		
+
 	}
 	return;
 });
@@ -67,10 +67,10 @@ app.post('/compile', function(req, res) {
 		return;
 	}
 	res.setHeader('Content-Type', 'application/json');
-	
+
 	var job = manage.createjob(req.body);
 	compile.compile();
-	
+
 	res.end(JSON.stringify(job));
 	return;
 });
@@ -80,19 +80,21 @@ app.post('/getjob', function(req, res) {
 		return;
 	}
 	res.setHeader('Content-Type', 'application/json');
-	
+
 	var job = manage.getJob(req.body.jobid);
 	res.end(JSON.stringify(job));
 	return;
 });
 
-app.listen(config.port);
-console.log('Listening on port ' + config.port + '...\n');
+var port = process.env.PORT || config.port
+
+app.listen(port);
+console.log('Listening on port ' + port + '...\n');
 
 var isKnownHost = function(request, response) {
 	if (!config.whitelist)
 		return true;
-	
+
 	for (var i = 0; i < whitelist.allowed_hosts.length; i++){
 		if (request.connection.remoteAddress == whitelist.allowed_hosts[i].ip){
 			return true;
@@ -102,5 +104,3 @@ var isKnownHost = function(request, response) {
 	response.end("403 - Forbidden");
 	return false;
 };
-
-

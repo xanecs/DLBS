@@ -1,12 +1,12 @@
 {
 	"compilepath": "/tmp/dlbs-compile",
 	"outputpath": "/tmp/dlbs-output",
-	"webroot": "http://10.0.2.2:8000",
+	"webroot": "http://dlbs.leonadi.de",
 	"port": "8000",
-	
+
 	"enable_filetimeout": true,
-	"filetimeout": 600000, 
-	
+	"filetimeout": 600000,
+
 	"pdflatex": "/usr/bin/rubber",
 	"whitelist": false
 }
